@@ -74,27 +74,6 @@ else:
      print("⚠️ FAISS database not found, rebuilding it...")
      build_vector_store()
 
-# def retrieve_similar_queries(user_question, top_k=3):
-#     """Finds the most relevant SQL queries from FAISS."""
-#     embeddings = get_local_embeddings()
-    
-#     try:
-#         vector_store = FAISS.load_local("faiss_sql_db", embeddings, allow_dangerous_deserialization=True)
-#         retriever = vector_store.as_retriever(search_kwargs={"k": top_k})
-#         docs = retriever.invoke(user_question)  # ✅ Fix: Use `.invoke()` instead of deprecated `.get_relevant_documents()`
-        
-#         return [doc.page_content for doc in docs]
-    
-#     except Exception as e:
-#         logging.error(f"❌ FAISS Retrieval Error: {str(e)}")
-#         return []
-# # ✅ Ensure FAISS vector store is properly built
-# if os.path.exists("faiss_sql_db"):
-#     print("✅ FAISS database found, loading it...")
-# else:
-#     print("⚠️ FAISS database not found, rebuilding it...")
-#     build_vector_store()
-
 
 
 

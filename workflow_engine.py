@@ -412,21 +412,25 @@ def convert_nl_to_sql(state, config):
     # ✅ Ensure garage owners only see their own garages
     if garage_ids:
         if len(garage_ids) == 1:
-            customer_filter = f"cv.customer_id = {garage_ids[0]}"
+            customer_filter = f"vs.garage_id = {garage_ids[0]}"
         else:
-            customer_filter = f"cv.customer_id IN ({', '.join(map(str, garage_ids))})"
+            customer_filter = f"vs.garage_id IN ({', '.join(map(str, garage_ids))})"
     else:
         customer_filter = "True"
 
-    # ✅ SQL generation prompt
+    # ✅ Improved Prompt Instructions
     prompt = f"""
 ### Instructions:
 You are a MySQL SQL query generator. Follow these rules:
 - Only output a valid `SELECT` statement.
 - Use table aliases and define them before use.
 - Correctly apply `JOIN ON` conditions.
-- For owners, filter using `{customer_filter}`.
-- Ensure table aliases are correctly defined in FROM or JOIN before use.
+- - For owners:
+  - Only calculate total revenue using `SUM(vs.total_amt)`.
+  - Do NOT include `garage_name` or JOIN the `garages` table.
+  - Always include `WHERE {customer_filter}`.
+
+- Ensure table aliases are correctly defined in `FROM` or `JOIN` before use.
 
 #### Database Schema:
 {schema}
@@ -445,18 +449,20 @@ You are a MySQL SQL query generator. Follow these rules:
         logging.debug(f"🟢 Generated SQL Query: {sql_query}")
 
         sql_query = clean_sql_query(sql_query)
+
+        # ✅ Force the garage filter for owners
+        
+
         if not sql_query.lower().startswith("select"):
-         state["sql_query"] = "Query could not be generated."
-         state["query_result"] = {"error": "Query could not be generated correctly."}
-         return state
+            state["sql_query"] = "Query could not be generated."
+            state["query_result"] = {"error": "Query could not be generated correctly."}
+            return state
 
-
-      
         state["sql_query"] = sql_query
         with SessionLocal() as session:
-         config = {"configurable": {"session": session, "role": user_role}}
+            config = {"configurable": {"session": session, "role": user_role}}
         result = execute_sql(state, config)
-        
+
         if result:
             logging.info(f"✅ SQL Query Successful:\n{sql_query}")
             logging.info(f"✅ Query Result: {result}")
@@ -471,6 +477,9 @@ You are a MySQL SQL query generator. Follow these rules:
         state["query_result"] = {"error": str(e)}
 
     return state
+
+      
+        
 
 
 
